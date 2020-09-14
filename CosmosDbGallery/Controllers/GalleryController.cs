@@ -75,8 +75,7 @@ namespace CosmosDbGallery.Controllers
         {
             var file = files.First();
             var name = Guid.NewGuid() + BusinessLogic.BusinessMethods.GetFileExtension(file.FileName);
-            var fileData = BusinessMethods.FileToBytes(file);
-            await _storageService.AddToAzureStorage(fileData, name);
+            _storageService.AddToAzureStorage(file, name);
 
             var id = Guid.NewGuid().ToString();
 

@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure.Storage.Blobs;
 using CosmosDbGallery.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace CosmosDbGallery.Services
 {
@@ -20,59 +20,21 @@ namespace CosmosDbGallery.Services
             _config = config;
         }
 
-        public async Task AddToAzureStorage(byte[] fileData, string fileName)
+        public void AddToAzureStorage(IFormFile file, string fileName)
         {
-            await UploadFileToBlobAsync(fileData, fileName);
+            var _task = Task.Run(() => this.UploadFileToBlobAsync(file,fileName));
+            _task.Wait();
         }
 
-        private async Task UploadFileToBlobAsync(byte[] fileData, string strFileName)
+        private async Task UploadFileToBlobAsync(IFormFile file, string strFileName)
         {
-            CloudStorageAccount cloudStorageAccount =
-                CloudStorageAccount.Parse(_config["StorageConnectionString"]);
-            CloudBlobClient cloudBlobClient = cloudStorageAccount.CreateCloudBlobClient();
-            string strContainerName = "demo";
-            CloudBlobContainer cloudBlobContainer = cloudBlobClient.GetContainerReference(strContainerName);
-
-            var blockBlob = cloudBlobContainer.GetBlockBlobReference(strFileName);
-            using (var stream = new MemoryStream(fileData, writable: false))
-            {
-                await blockBlob.UploadFromStreamAsync(stream);
-            }
-
-        }
-
-        public async Task<List<BlobImageModel>> GetBlobs()
-        {
-
-            var list = new List<BlobImageModel>();
-
-            CloudStorageAccount cloudStorageAccount =
-                CloudStorageAccount.Parse(_config["StorageConnectionString"]);
-            CloudBlobClient blobClient = cloudStorageAccount.CreateCloudBlobClient();
-
-            CloudBlobContainer container = blobClient.GetContainerReference("demo");
-
-            BlobContinuationToken continuationToken = null;
-            List<IListBlobItem> results = new List<IListBlobItem>();
-            do
-            {
-                var response = await container.ListBlobsSegmentedAsync(continuationToken);
-                continuationToken = response.ContinuationToken;
-                results.AddRange(response.Results);
-            }
-            while (continuationToken != null);
-
-            foreach (IListBlobItem item in results)
-            {
-                var blobImage = new BlobImageModel();
-                var b = (CloudBlockBlob)item;
-                blobImage.BlobImageUri = b.Uri.ToString();
-                blobImage.BlobImageName = b.Uri.Segments.Last();
-                blobImage.LastModifiedDate = b.Properties.LastModified.Value.UtcDateTime;
-                list.Add(blobImage);
-            }
-
-            return list;
+            BlobServiceClient blobServiceClient = new BlobServiceClient(_config["StorageConnectionString"]);
+            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient("demo");
+            BlobClient blobClient = containerClient.GetBlobClient(strFileName);
+            using MemoryStream memoryStream = new MemoryStream();
+            await file.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+            await blobClient.UploadAsync(memoryStream, true);
 
         }
     }

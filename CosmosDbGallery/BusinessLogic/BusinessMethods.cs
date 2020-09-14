@@ -13,14 +13,5 @@ namespace CosmosDbGallery.BusinessLogic
         {
             return fileName.Substring(fileName.LastIndexOf('.'));
         }
-
-        public static byte[] FileToBytes(IFormFile file)
-        {
-            byte[] bytes = null;
-            using var ms = new MemoryStream() ;
-            file.CopyToAsync(ms).GetAwaiter();
-                bytes = ms.ToArray();
-                return bytes;
-        }
     }
 }
