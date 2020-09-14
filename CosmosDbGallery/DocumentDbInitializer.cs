@@ -21,21 +21,8 @@ namespace CosmosDbGallery
 
         private static async Task CreateDatabaseIfNotExistsAsync(string databaseId)
         {
-            try
-            {
-                await _client.ReadDatabaseAsync(UriFactory.CreateDatabaseUri(databaseId));
-            }
-            catch (DocumentClientException e)
-            {
-                if (e.StatusCode == System.Net.HttpStatusCode.NotFound)
-                {
-                    await _client.CreateDatabaseAsync(new Database { Id = databaseId });
-                }
-                else
-                {
-                    throw;
-                }
-            }
+
+            await _client.CreateDatabaseIfNotExistsAsync(new Database { Id = databaseId });
         }
 
         private static async Task CreateCollectionIfNotExistsAsync(string DatabaseId, string CollectionId, string partitionkey = null)
