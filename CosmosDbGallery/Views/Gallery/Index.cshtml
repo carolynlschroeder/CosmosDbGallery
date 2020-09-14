@@ -1,0 +1,25 @@
+﻿
+@{
+    ViewData["Title"] = "Gallery Images";
+}
+
+<h2>Gallery Images</h2>
+
+@for (var i = 0; i < Model.Count; i += 3)
+{
+    <div class="row gallerypadding">
+        @for (int j = i; j <= Math.Min(2 + i, Model.Count - 1); j++)
+        {
+            <div class="col-md-3">
+                <div class="col-md-12 gallery" style="background-image: url('@Model[j].ImageUri')"></div>
+                <div>
+                    <a href="#" class="like"><img src="~/Images/fb_thumb.png" /></a><input type="hidden" id="imageId" value="@Model[j].ImageId"/>&nbsp;&nbsp;&nbsp;<span>@String.Format("{0} Likes", Model[j].TotalLikes)</span>
+                </div>
+            </div>
+        }
+    </div>
+}
+@section scripts{
+
+    <script src="~/js/gallery.js"></script>
+}
